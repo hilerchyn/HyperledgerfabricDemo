@@ -20,3 +20,17 @@ channel仍然可以继续创建、读写。
 
 不同的服务器分别拉取相应的镜像
 
+
+# 生成必要文件
+
+## CA文件
+
+```shell
+./bin/cryptogen generate --config=./crypto-config.yaml
+```
+
+## 创世区块
+
+```shell
+./bin/configtxgen -profile TwoOrgsOrdererGenesis -outputBlock ./channel-artifacts/genesis.block
+```
