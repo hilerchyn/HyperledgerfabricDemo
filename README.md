@@ -6,8 +6,7 @@
 | peer  | 2 |
 
 
-环境准备
--------
+# 环境准备
 
 1. Docker
 2. DockerCompose
