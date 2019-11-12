@@ -34,3 +34,17 @@ channel仍然可以继续创建、读写。
 ```shell
 ./bin/configtxgen -profile TwoOrgsOrdererGenesis -outputBlock ./channel-artifacts/genesis.block
 ```
+
+启动排序节点要用到
+
+
+## Channel初始
+
+```shell
+./bin/configtxgen -profile TwoOrgsChannel -outputCreateChannelTx ./channel-artifacts/mychannel.tx -channelID mychannel
+```
+
+peer 节点启动后需要创建的频道文件
+
+
+
