@@ -1,0 +1,48 @@
+OrdererOrgs:
+  - Name: Orderer
+    Domain: 7shu.co
+    Specs:
+      - Hostname: orderer0
+      - Hostname: orderer1
+      - Hostname: orderer2
+
+PeerOrgs:
+  - Name: Org1
+    Domain: org1.7shu.co
+    Template:
+      Count: 2
+    Users:
+      Count: 1
+
+  - Name: Org2
+    Domain: org2.7shu.co
+    Template:
+      Count: 2
+    Users:
+      Count: 1
+    Specs:
+      - Hostname: foo
+        CommonName: foo27.org2.7shu.co
+      - Hostname: bar
+      - Hostname: baz
+
+  - Name: Org3
+    Domain: org3.7shu.co
+    Template:
+      Count: 2
+    Users:
+      Count: 1
+    
+  - Name: Org4
+    Domain: org4.7shu.co
+    Template:
+      Count: 2
+    Users:
+      Count: 1
+  
+  - Name: Org5
+    Domain: org5.7shu.co
+    Template:
+      Count: 2
+    Users:
+      Count: 1
