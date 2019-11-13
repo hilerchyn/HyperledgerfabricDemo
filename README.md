@@ -48,3 +48,115 @@ peer 节点启动后需要创建的频道文件
 
 
 
+## 频道
+
+### 创建
+
+mychannel.tx 是频道初始时生成的
+
+```shell
+peer channel create -o orderer0.7shu.co:7050 -c mychannel -t 50s -f ./channel-artifacts/mychannel.tx
+```
+
+生成 频道初始区块  mychannel.block 
+
+### 加入
+
+mychannel.block 是上一步生成的
+
+```shell
+peer channel join -b mychannel.block 
+```
+
+## 智能合约 (链码)
+
+### 安装
+
+```shell
+ peer chaincode install -n mycc -p github.com/hyperledger/fabric/chaincode/go/chaincode_example02 -v 1.0
+```
+
+### 实例化
+
+
+```shell
+peer chaincode instantiate -o orderer0.7shu.co:7050 -C mychannel -n mycc -c '{"Args":["init","A","10","B","10"]}' -P "OR ('Org1MSP.member','Org2MSP.member')" -v 1.0
+```
+
+注意此处的 -v 指定的版本为 1.0  与安装时指定的版本一致
+
+### 查询
+
+```shell
+peer chaincode query -C mychannel -n mycc -c '{"Args":["query","A"]}'
+```
+
+
+## MSP 证书会过期吗？
+
+```shell
+2019-11-13 06:09:13.890 UTC [msp.identity] newIdentity -> DEBU 033 Creating identity instance for cert -----BEGIN CERTIFICATE-----
+MIICDTCCAbSgAwIBAgIRAM7VdBZke0/mYHEhgPIjug0wCgYIKoZIzj0EAwIwazEL
+MAkGA1UEBhMCVVMxEzARBgNVBAgTCkNhbGlmb3JuaWExFjAUBgNVBAcTDVNhbiBG
+cmFuY2lzY28xFTATBgNVBAoTDG9yZzEuN3NodS5jbzEYMBYGA1UEAxMPY2Eub3Jn
+MS43c2h1LmNvMB4XDTE5MTExMjA4MjYwMFoXDTI5MTEwOTA4MjYwMFowVzELMAkG
+A1UEBhMCVVMxEzARBgNVBAgTCkNhbGlmb3JuaWExFjAUBgNVBAcTDVNhbiBGcmFu
+Y2lzY28xGzAZBgNVBAMMEkFkbWluQG9yZzEuN3NodS5jbzBZMBMGByqGSM49AgEG
+CCqGSM49AwEHA0IABIM3fKgG3Vl0JXmEL/x9vAS4ZMvKiej/bxEXj1vXgA4mNWSG
+lGBaezgF41KT9helj/vIXFqqBUc93pesfUqWAHWjTTBLMA4GA1UdDwEB/wQEAwIH
+gDAMBgNVHRMBAf8EAjAAMCsGA1UdIwQkMCKAINvDix4euRZAizf72ltp0ZJ3kmN2
+r++jqvo60+A7pYOOMAoGCCqGSM49BAMCA0cAMEQCIFMu9WYjIyceYNW3kinMa1x7
+ULKvBHKoLSCX8AOjdJN2AiAuJOh1KF721Pypr/BKmeNCF81HdQUVRmZmHlUT6G33
+4w==
+-----END CERTIFICATE-----
+2019-11-13 06:09:13.890 UTC [msp] setupSigningIdentity -> DEBU 034 Signing identity expires at 2029-11-09 08:26:00 +0000 UTC
+```
+
+"Signing identity expires at" 指明了签名标识有实效时间 为10年。 这个实效时间是不是可以手动指定？
+
+
+## 一个peer的docker 通过 docker-compose rm -sf 删除后，所有的数据都删除了！！
+
+mychannel.block 丢失，则无法加入频道
+
+
+
+## 重新创建、加入频道，安装、实例化 频道的智能和约
+
+
+
+关键是  -channelID  这个参数，用来指定后续创建的 channel 名称
+
+Error: got unexpected status: BAD_REQUEST -- initializing configtx manager failed: bad channel ID: channel ID '7shuchannel' contains illegal characters
+
+```shell
+./bin/configtxgen -profile TwoOrgsChannel -outputCreateChannelTx ./channel-artifacts/chentaochannel.tx -channelID chentaochannel
+```
+
+
+
+```shell
+peer channel create -o orderer0.7shu.co:7050 -c chentaochannel -t 50s -f ./channel-artifacts/chentaochannel.tx
+```
+
+
+```shell
+peer channel join -b chentaochannel.block 
+```
+
+
+```shell
+ peer chaincode install -n chentaocc -p github.com/hyperledger/fabric/chaincode/go/chaincode_example02 -v 1.0
+```
+
+
+* 实例化智能合约非常耗时间，需要搞明白是什么原因？
+
+```shell
+peer chaincode instantiate -o orderer0.7shu.co:7050 -C chentaochannel -n chentaocc -c '{"Args":["init","A","10","B","15"]}' -P "OR ('Org1MSP.member','Org2MSP.member')" -v 1.0
+```
+
+```shell
+peer chaincode query -C chentaochannel -n chentaocc -c '{"Args":["query","A"]}'
+```
+
