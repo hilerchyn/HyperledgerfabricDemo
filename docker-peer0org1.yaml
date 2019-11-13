@@ -16,10 +16,10 @@ services:
       - FABRIC_CA_SERVER_CA_NAME=ca
       - FABRIC_CA_SERVER_TLS_ENABLE=false
       - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org1.7shu.co-cert.pem
-      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/ssdfsadfdsfksdafjlsdjfskafdjslf_sk
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/dbc38b1e1eb916408b37fbda5b69d19277926376afefa3aafa3ad3e03ba5838e_sk
     ports:
       - "7054:7054"
-    command: sh -c 'fabric-ca-server start --ca.certfile /etc/hyperledger/fabric-ca-server-config/ca.org1.7shu.co-cert.pem --ca.keyfile /etc/hyperledger/fabric-ca-server-config/ssdfsadfdsfksdafjlsdjfskafdjslf_sk -b admin:adminpw -d'
+    command: sh -c 'fabric-ca-server start --ca.certfile /etc/hyperledger/fabric-ca-server-config/ca.org1.7shu.co-cert.pem --ca.keyfile /etc/hyperledger/fabric-ca-server-config/dbc38b1e1eb916408b37fbda5b69d19277926376afefa3aafa3ad3e03ba5838e_sk -b admin:adminpw -d'
     volumes:
       - ./crypto-config/peerOrganizations/org1.7shu.co/ca/:/etc/hyperledger/fabric-ca-server-config
 
@@ -49,7 +49,7 @@ services:
       - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
     volumes:
       - /var/run/:/host/var/run/
-      - ./crypto-config/peerOrganizations/org1.7shu.co/peers/peer0.org1.7shu.co/msg:/etc/hyperledger/fabric/msp
+      - ./crypto-config/peerOrganizations/org1.7shu.co/peers/peer0.org1.7shu.co/msp:/etc/hyperledger/fabric/msp
       - ./crypto-config/peerOrganizations/org1.7shu.co/peers/peer0.org1.7shu.co/tls:/etc/hyperledger/fabric/tls
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
     command: peer node start
