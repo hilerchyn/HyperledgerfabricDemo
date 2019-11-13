@@ -204,3 +204,14 @@ dev-foo27.org2.7shu.co-chentaocc-1.0-0d5dd5a7d9c5c4ea387de7b26b9558ae38c4df37e44
 "chaincode -peer.add…" 
 向节点发送编译后的智能合约
 
+* 通过实际操作：
+
+> 关闭一个节点  docker-compose stop 重新开启的时候，这个节点是未启动的，因为docker-compose.yaml 配置文件中没有相应的配置
+> 当执行查询操作  peer chaincode query -C chentaochannel -n chentaocc -c '{"Args":["query","A"]}' 后，发现这个容器被启动了
+
+
+cli节点的配置文件中的volumes 配置中作了如下映射
+volumes:
+      - /var/run/:/host/var/run/
+由此可推断，在执行查询操作时，cli容器中的程序通过调用docker的接口创建的，且用于智能合约的验证。
+正是因为在创建新容器要拉取新的docker镜像，所以导致新的节点在安装合约时和第一次查询时的等待时间特别长。
