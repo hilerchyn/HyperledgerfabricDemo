@@ -160,3 +160,47 @@ peer chaincode instantiate -o orderer0.7shu.co:7050 -C chentaochannel -n chentao
 peer chaincode query -C chentaochannel -n chentaocc -c '{"Args":["query","A"]}'
 ```
 
+
+### 新加入频道的peer 如果没有安装智能合约就执行查询操作会遇到问题
+
+
+如  foo27.org2.7shu.co 节点，
+
+peer channel join -b chentaochannel.block 
+
+
+未安装智能合约，进行下面操作，
+
+peer chaincode query -C chentaochannel -n chentaocc -c '{"Args":["query","A"]}'
+
+
+发生如下错误：
+
+Error: endorsement failure during query. response: status:500 message:"cannot retrieve package for chaincode chentaocc/1.0, error open /var/hyperledger/production/chaincodes/chentaocc.1.0: no such file or directory" 
+
+
+* 是否意味着 智能合约编译后的程序即放置在报错的文件夹内呢？
+
+经过查找，该智能合约编译后，被放置在peer容器对应的目录中，即foo27.org2.7shu.co容器的  /var/hyperledger/production/chaincodes/chentaocc.1.0
+
+* 查看容器列表(docker ps) 发现多了一个容器
+
+```shell
+CONTAINER ID        IMAGE                                                                                                   COMMAND                  CREATED             STATUS              PORTS                                        NAMES
+1b82e8db3658        dev-foo27.org2.7shu.co-chentaocc-1.0-0d5dd5a7d9c5c4ea387de7b26b9558ae38c4df37e44c1521be56aec05c261288   "chaincode -peer.add…"   6 minutes ago       Up 6 minutes                                                     dev-foo27.org2.7shu.co-chentaocc-1.0
+f0bb1c399236        hyperledger/fabric-tools                                                                                "/bin/bash"              2 hours ago         Up 22 minutes                                                    cli
+196d6e00f707        hyperledger/fabric-peer                                                                                 "peer node start"        2 hours ago         Up 22 minutes       0.0.0.0:7051-7053->7051-7053/tcp             foo27.org2.7shu.co
+c4af12231983        hyperledger/fabric-ca                                                                                   "sh -c 'fabric-ca-se…"   2 hours ago         Up 22 minutes       0.0.0.0:7054->7054/tcp                       ca
+bb36cbfa8b4c        hyperledger/fabric-couchdb                                                                              "tini -- /docker-ent…"   2 hours ago         Up 22 minutes       4369/tcp, 9100/tcp, 0.0.0.0:5984->5984/tcp   couchdb
+[root@localhost vagrant]# docker exe
+
+```
+
+名字：
+dev-foo27.org2.7shu.co-chentaocc-1.0-0d5dd5a7d9c5c4ea387de7b26b9558ae38c4df37e44c1521be56aec05c261288   
+推断为用来编译智能合约的
+
+命令：
+"chaincode -peer.add…" 
+向节点发送编译后的智能合约
+
