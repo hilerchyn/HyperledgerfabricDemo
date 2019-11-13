@@ -93,5 +93,5 @@ services:
       - "orderer0.7shu.co:192.168.31.230"
       - "orderer1.7shu.co:192.168.31.231"
       - "orderer2.7shu.co:192.168.31.232"
-      - "foo27.org2.7shu.co:192.168.31.240"
+      - "foo27.org2.7shu.co:192.168.31.241"
 
