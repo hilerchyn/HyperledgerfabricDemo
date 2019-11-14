@@ -219,3 +219,13 @@ volumes:
 正是因为在创建新容器要拉取新的docker镜像，所以导致新的节点在安装合约时和第一次查询时的等待时间特别长。
 
 ## 智能合约 参考  https://hyperledger-fabric.readthedocs.io/en/latest/chaincode.html
+
+
+## 打包智能合约
+
+
+```shell
+
+ peer chaincode package -n chentaocc -p github.com/hyperledger/fabric/chaincode/go/chaincode_example02 -v 0 -s -S -i "AND('OrgA.admin')" ccpack.out
+
+```
