@@ -417,5 +417,137 @@ Error: endorsement failure during query. response: status:500 message:"Instantia
 
 ```
 
-###### 出错的原因是不是因为 打包的 -i 参数指定的 实例化 背书策略失败引起的？
+###### 出错的原因是不是因为 打包的 -i 参数指定的  "AND('OrgA.admin')" 实例化 背书策略失败引起的？
 
+因为 configtx.yaml 和  crypto-config.yaml 中没有 OrgA 的相关配置
+
+
+ peer chaincode package -n chentaocc -p github.com/hyperledger/fabric/chaincode/go/chaincode_example02 -v 1.0 -s -S -i "AND('Org2.admin')" ./channel-artifacts/chentaocc.package
+
+
+bar 属于 Org2 所以， -i 参数指定用 Org2 的amdin来实例化
+
+
+peer  chaincode signpackage ./channel-artifacts/chentaocc.package ./channel-artifacts/chentaocc.package.signed
+
+签名
+
+
+重新安装CDS
+
+```
+peer chaincode install ./channel-artifacts/chentaocc.package.signed
+
+peer channel join -b ./channel-artifacts/chentaochannel.block
+
+peer chaincode query -C chentaochannel -n chentaocc -c '{"Args":["query","A"]}'
+
+
+Error: endorsement failure during query. response: status:500 message:"Instantiation policy mismatch for cc chentaocc/1.0"
+
+
+```
+
+仍然错误, "Instantiation policy mismatch for cc chentaocc/1.0"  (实列化策略不匹配), 即新的peer在第一次查询时需要实例化(instantiate)刚安装智能合约
+但是只能合约在打包时,指定了实列化策略,而当前节点不符合该策略,那么我们用  -i "AND('Org2.member')"  来测试一下, 原因是 当前节点不是 admin.
+
+
+```
+
+# peer0Org1 打包
+
+peer chaincode package -n chentaocc -p github.com/hyperledger/fabric/chaincode/go/chaincode_example02 -v 1.0 -s -S -i "AND('Org2.member')" ./channel-artifacts/chentaocc.package
+
+# foo27Org2 签名
+
+peer  chaincode signpackage ./channel-artifacts/chentaocc.package ./channel-artifacts/chentaocc.package.signed
+
+# barOrg2 执行新节点的所有操作
+
+peer chaincode install ./channel-artifacts/chentaocc.package.signed
+
+peer channel join -b ./channel-artifacts/chentaochannel.block
+
+peer chaincode query -C chentaochannel -n chentaocc -c '{"Args":["query","A"]}'
+
+
+Error: endorsement failure during query. response: status:500 message:"Instantiation policy mismatch for cc chentaocc/1.0"
+
+
+```
+
+
+查看代码
+
+```
+#core/common/ccprovider/ccprovider.go
+
+func CheckInstantiationPolicy(name, version string, cdLedger *ChaincodeData) error {
+	ccdata, err := GetChaincodeData(name, version)
+	if err != nil {
+		return err
+	}
+
+	// we have the info from the fs, check that the policy
+	// matches the one on the file system if one was specified;
+	// this check is required because the admin of this peer
+	// might have specified instantiation policies for their
+	// chaincode, for example to make sure that the chaincode
+	// is only instantiated on certain channels; a malicious
+	// peer on the other hand might have created a deploy
+	// transaction that attempts to bypass the instantiation
+	// policy. This check is there to ensure that this will not
+	// happen, i.e. that the peer will refuse to invoke the
+	// chaincode under these conditions. More info on
+	// https://jira.hyperledger.org/browse/FAB-3156
+	if ccdata.InstantiationPolicy != nil {
+		if !bytes.Equal(ccdata.InstantiationPolicy, cdLedger.InstantiationPolicy) {
+			return fmt.Errorf("Instantiation policy mismatch for cc %s/%s", name, version)
+		}
+	}
+
+	return nil
+}
+
+
+```
+
+
+!bytes.Equal(ccdata.InstantiationPolicy, cdLedger.InstantiationPolicy)
+
+此处实例化策略是与分类账本原有的实例化策略做的对比, 那么我们在打包的时候-i 参数指定的策略也应该与 最初的实例化策略一致才能通过,下面测试:
+
+```
+
+# peer0Org1 打包
+
+peer chaincode package -n chentaocc -p github.com/hyperledger/fabric/chaincode/go/chaincode_example02 -v 1.0 -s -S -i  "OR ('Org1MSP.member','Org2MSP.member')" ./channel-artifacts/chentaocc.package
+
+# foo27Org2 签名
+
+peer  chaincode signpackage ./channel-artifacts/chentaocc.package ./channel-artifacts/chentaocc.package.signed
+
+# barOrg2 执行新节点的所有操作
+
+peer chaincode install ./channel-artifacts/chentaocc.package.signed
+
+peer channel join -b ./channel-artifacts/chentaochannel.block
+
+peer chaincode query -C chentaochannel -n chentaocc -c '{"Args":["query","A"]}'
+
+
+Error: endorsement failure during query. response: status:500 message:"Instantiation policy mismatch for cc chentaocc/1.0"
+
+
+# 实例化出错, 创建者的MSP(Org2MSP)与实例化的MSP(Org2MSP)不一致
+peer chaincode instantiate -o orderer0.7shu.co:7050 -C chentaochannel -n chentaocc -c '{"Args":["init","A","10","B","15"]}' -P "OR ('Org1MSP.member','Org2MSP.member')" -v 1.0
+
+2019-11-15 10:36:12.297 UTC [msp.identity] Sign -> DEBU 04c Sign: plaintext: 0AA0070A6C08031A0C089CFFB9EE0510...324D53500A04657363630A0476736363
+2019-11-15 10:36:12.297 UTC [msp.identity] Sign -> DEBU 04d Sign: digest: 7F6B4AC669C6A87D07FAE87FE9C9E080E2DEFCAC8ADA0C043AE39BEBB4D72370
+Error: error endorsing chaincode: rpc error: code = Unknown desc = access denied: channel [chentaochannel] creator org [Org2MSP]
+
+
+```
+
+
+查看日志,在查询过程中提示 admin 的 tls  证书目录不存在,继续调查
