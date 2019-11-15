@@ -224,8 +224,22 @@ volumes:
 ## 打包智能合约
 
 
+
+在 foo27 上打包
+
 ```shell
 
  peer chaincode package -n chentaocc -p github.com/hyperledger/fabric/chaincode/go/chaincode_example02 -v 0 -s -S -i "AND('OrgA.admin')" ccpack.out
 
 ```
+
+
+
+在 peer0  上再一次对包签名
+
+```shell
+peer  chaincode signpackage ./channel-artifacts/ccpack.out ./channel-artifacts/signedccpack.out
+
+```
+
+
