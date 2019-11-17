@@ -530,6 +530,7 @@ peer  chaincode signpackage ./channel-artifacts/chentaocc.package ./channel-arti
 # barOrg2 执行新节点的所有操作
 
 peer chaincode install ./channel-artifacts/chentaocc.package.signed
+#  peer chaincode install -n chentaocc -p github.com/hyperledger/fabric/chaincode/go/chaincode_example02 -v 1.0
 
 peer channel join -b ./channel-artifacts/chentaochannel.block
 
