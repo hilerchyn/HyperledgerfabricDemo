@@ -16,10 +16,10 @@ services:
       - FABRIC_CA_SERVER_CA_NAME=ca
       - FABRIC_CA_SERVER_TLS_ENABLE=false
       - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org2.7shu.co-cert.pem
-      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/05b0747d7ab388f39de25234ebda2be6aad90dd42981acbdd4f7225fa6529fd7_sk
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/e8c59bec0e2bd9db58386070ed21ec2289921b8c0d55a35115d9fae597dc7e01_sk
     ports:
       - "7054:7054"
-    command: sh -c 'fabric-ca-server start --ca.certfile /etc/hyperledger/fabric-ca-server-config/ca.org2.7shu.co-cert.pem --ca.keyfile /etc/hyperledger/fabric-ca-server-config/05b0747d7ab388f39de25234ebda2be6aad90dd42981acbdd4f7225fa6529fd7_sk -b admin:adminpw -d'
+    command: sh -c 'fabric-ca-server start --ca.certfile /etc/hyperledger/fabric-ca-server-config/ca.org2.7shu.co-cert.pem --ca.keyfile /etc/hyperledger/fabric-ca-server-config/e8c59bec0e2bd9db58386070ed21ec2289921b8c0d55a35115d9fae597dc7e01_sk -b admin:adminpw -d'
     volumes:
       - ./crypto-config/peerOrganizations/org2.7shu.co/ca/:/etc/hyperledger/fabric-ca-server-config
 
@@ -60,9 +60,9 @@ services:
     depends_on:
       - couchdb
     extra_hosts:
-      - "orderer0.7shu.co:192.168.31.230"
-      - "orderer1.7shu.co:192.168.31.231"
-      - "orderer2.7shu.co:192.168.31.232"
+      - "orderer0.7shu.co:192.168.31.220"
+      - "orderer1.7shu.co:192.168.31.221"
+      - "orderer2.7shu.co:192.168.31.222"
 
   cli:
     container_name: cli
@@ -90,8 +90,8 @@ services:
     depends_on:
       - foo27.org2.7shu.co
     extra_hosts:
-      - "orderer0.7shu.co:192.168.31.230"
-      - "orderer1.7shu.co:192.168.31.231"
-      - "orderer2.7shu.co:192.168.31.232"
-      - "foo27.org2.7shu.co:192.168.31.241"
+      - "orderer0.7shu.co:192.168.31.220"
+      - "orderer1.7shu.co:192.168.31.221"
+      - "orderer2.7shu.co:192.168.31.222"
+      - "foo27.org2.7shu.co:192.168.31.122"
 

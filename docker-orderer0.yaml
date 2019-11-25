@@ -33,9 +33,9 @@ services:
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric
     command: orderer
     volumes:
-      - ./config/channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
-      - ./config/crypto-config/ordererOrganizations/7shu.co/orderers/orderer0.7shu.co/msp:/var/hyperledger/orderer/msp
-      - ./config/crypto-config/ordererOrganizations/7shu.co/orderers/orderer0.7shu.co/tls:/var/hyperledger/orderer/tls
+      - ./channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+      - ./crypto-config/ordererOrganizations/7shu.co/orderers/orderer0.7shu.co/msp:/var/hyperledger/orderer/msp
+      - ./crypto-config/ordererOrganizations/7shu.co/orderers/orderer0.7shu.co/tls:/var/hyperledger/orderer/tls
     ports:
       - 7050:7050
     extra_hosts:
