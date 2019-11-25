@@ -1,5 +1,6 @@
 IP tables
 
+workbench: 192.168.31.100
 
 
 zookeeper1 192.168.31.201
