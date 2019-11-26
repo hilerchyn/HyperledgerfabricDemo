@@ -1,3 +1,5 @@
 *.vagrant
 *.bak
 vagrant/data/
+tools/.idea/
+tools/*.exe
