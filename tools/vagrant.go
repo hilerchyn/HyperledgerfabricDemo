@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 )
@@ -36,24 +37,25 @@ func (a *App) Run() error {
 
 		fullPath := a.VagrantPath + "/" + fi.Name() + "/Vagrantfile"
 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-			return err
-		}
-
-		if err := os.Chdir(a.VagrantPath + "/" + fi.Name()); err != nil {
-			fmt.Println(err.Error())
-			return err
+			//fmt.Println(err.Error())
+			continue
 		}
 
 		go func() {
+			a.WaitGroup.Add(1)
+			defer a.WaitGroup.Done()
+
+			wd := a.VagrantPath + "/" + fi.Name()
+
 			switch a.VagrantAction {
 			case "start":
-				if err := a.start(fullPath); err != nil {
-					fmt.Println(err.Error())
+				if err := a.start(wd); err != nil {
+					fmt.Println(err.Error(), fullPath)
 				}
 
 			case "halt":
-				if err := a.halt(fullPath); err != nil {
-					fmt.Println(err.Error())
+				if err := a.halt(wd); err != nil {
+					fmt.Println(err.Error(), fullPath)
 				}
 
 			default:
@@ -71,14 +73,16 @@ func (a *App) Run() error {
 
 func (a *App) start(fullPath string) error {
 
-	a.WaitGroup.Add(1)
-	defer a.WaitGroup.Done()
-
 	fmt.Println("STARTING...  ", fullPath)
-	cmd := exec.Command("vagrant", "up")
+
+
+
+	cmd := exec.Command("D:\\Program Files\\Vagrant\\bin\\vagrant.exe", "up")
+	cmd.Dir = fullPath
 	if err := cmd.Start(); err != nil {
 		return err
 	}
+
 	if err := cmd.Wait(); err != nil {
 		return err
 	}
@@ -88,11 +92,9 @@ func (a *App) start(fullPath string) error {
 
 func (a *App) halt(fullPath string) error {
 
-	a.WaitGroup.Add(1)
-	defer a.WaitGroup.Done()
-
 	fmt.Println("HALTING...  ", fullPath)
-	cmd := exec.Command("vagrant", "halt")
+	cmd := exec.Command("D:\\Program Files\\Vagrant\\bin\\vagrant.exe", "halt")
+	cmd.Dir = fullPath
 	if err := cmd.Start(); err != nil {
 		return err
 	}
@@ -120,7 +122,13 @@ func main() {
 	cwd, err := os.Getwd()
 	if err != nil {
 		fmt.Println(err.Error())
+		return
+	}
 
+	cwd, err = filepath.Abs(cwd)
+
+	if err != nil {
+		fmt.Println(err.Error())
 		return
 	}
 
