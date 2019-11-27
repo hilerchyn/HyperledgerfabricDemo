@@ -3,9 +3,9 @@ IP tables
 workbench: 192.168.31.100
 
 
-zookeeper1 192.168.31.201
-zookeeper2 192.168.31.202
-zookeeper3 192.168.31.203
+zookeeper1: 192.168.31.201
+zookeeper2: 192.168.31.202
+zookeeper3: 192.168.31.203
 
 kafka1: 192.168.31.211
 kafka2: 192.168.31.212
