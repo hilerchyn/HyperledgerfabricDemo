@@ -4,20 +4,17 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
+	"time"
 )
 
-var vagrantPath = flag.String("v", ".."+string(os.PathSeparator)+"vagrant", "-v [vagrant path]")
-var action = flag.String("a", "start", "-a [start|halt]")
+var action = flag.String("a", "up", "-a [up|halt]")
 var exe = flag.String("e", "vagrant", "-e \\path\\of\\vagrant.exe")
 var app *App
-var globalMap = sync.Map{}
 
 type App struct {
 	VagrantPath          string
@@ -25,7 +22,6 @@ type App struct {
 	VagrantExe           string
 	CurrentWorkDirectory string
 	FileInfoArr          []os.FileInfo
-	WaitGroup            sync.WaitGroup
 }
 
 func (a *App) Run() error {
@@ -54,57 +50,38 @@ func (a *App) Run() error {
 
 	// get box ID and execute COMMAND
 	count := 0
-	for i:= 0; i < len(all); i++ {
+	start := time.Now()
+	for i := 0; i < len(all); i++ {
 		line := all[i]
 
 		if !reg.MatchString(line) {
 			continue
 		}
 
-		id := reg.FindString(line)
-		fmt.Println("get ID with regex: ",id)
+		vmId := strings.TrimRight(reg.FindString(line), " ")
 		count++
 
-		l := strings.Split(line, " ")
-
-
-		if len(l[0]) == 7  {
-			if (l[0][6] >=48 && l[0][6] <=57) || (l[0][6] >=97 && l[0][6] <=122) {
-				fmt.Println(l[0])
-				fmt.Println(l[4])
-
-
-				cmd := exec.Command(a.VagrantExe, a.VagrantAction, l[0])
-				cmd.Stdout = os.Stdout
-				cmd.Stderr = os.Stderr
-				if err := cmd.Start(); err != nil {
-					return err
-				}
-				if err := cmd.Wait(); err != nil {
-					return err
-				}
-			}
-
+		fmt.Println(a.VagrantAction, "... ", fmt.Sprintf("%s [%d]", vmId, count))
+		cmd := exec.Command(a.VagrantExe, a.VagrantAction, vmId)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Start(); err != nil {
+			return err
+		}
+		if err := cmd.Wait(); err != nil {
+			return err
 		}
 
 	}
 
-	return nil
+	fmt.Println("TAKE TIME (minutes): ", time.Now().Sub(start).Minutes())
 
+	return nil
 
 }
 
-
 func main() {
 	flag.Parse()
-
-	// vagrant path
-	path := strings.TrimSuffix(*vagrantPath, "/")
-	fileInfoArr, err := ioutil.ReadDir(path)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
 
 	// current work directory
 	cwd, err := os.Getwd()
@@ -118,9 +95,7 @@ func main() {
 		return
 	}
 
-	app = &App{VagrantPath: path, FileInfoArr: fileInfoArr, CurrentWorkDirectory: cwd, VagrantAction: *action}
-
-	app.VagrantExe = *exe
+	app = &App{CurrentWorkDirectory: cwd, VagrantAction: *action, VagrantExe: *exe}
 
 	err = app.Run()
 	if err != nil {
