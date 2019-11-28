@@ -11,7 +11,6 @@ import (
 	"regexp"
 	"strings"
 	"sync"
-	"time"
 )
 
 var vagrantPath = flag.String("v", ".."+string(os.PathSeparator)+"vagrant", "-v [vagrant path]")
@@ -48,7 +47,6 @@ func (a *App) Run() error {
 		return nil
 	}
 
-	// regexp for ID
 	reg, err := regexp.Compile("^([0-9]|[a-z]){7,7} ")
 	if err != nil {
 		return err
@@ -56,42 +54,46 @@ func (a *App) Run() error {
 
 	// get box ID and execute COMMAND
 	count := 0
-	start := time.Now()
-	for i := 0; i < len(all); i++ {
+	for i:= 0; i < len(all); i++ {
 		line := all[i]
 
-		// match ID
 		if !reg.MatchString(line) {
 			continue
 		}
 
-		// get ID
 		id := reg.FindString(line)
-		fmt.Println("get ID with regex: ", id)
+		fmt.Println("get ID with regex: ",id)
 		count++
 
-		// display info
-		fmt.Println(a.VagrantAction, "... ", id, "(", count, ")")
+		l := strings.Split(line, " ")
 
-		// execute command
-		cmd := exec.Command(a.VagrantExe, a.VagrantAction, id)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Start(); err != nil {
-			return err
-		}
-		if err := cmd.Wait(); err != nil {
-			return err
+
+		if len(l[0]) == 7  {
+			if (l[0][6] >=48 && l[0][6] <=57) || (l[0][6] >=97 && l[0][6] <=122) {
+				fmt.Println(l[0])
+				fmt.Println(l[4])
+
+
+				cmd := exec.Command(a.VagrantExe, a.VagrantAction, l[0])
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+				if err := cmd.Start(); err != nil {
+					return err
+				}
+				if err := cmd.Wait(); err != nil {
+					return err
+				}
+			}
+
 		}
 
 	}
 
-	// print statics
-	fmt.Println("TAKE TIME (minute): ", time.Now().Sub(start).Minutes())
-
 	return nil
 
+
 }
+
 
 func main() {
 	flag.Parse()
