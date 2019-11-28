@@ -8,13 +8,15 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
+	"time"
 )
 
 var vagrantPath = flag.String("v", ".."+string(os.PathSeparator)+"vagrant", "-v [vagrant path]")
 var action = flag.String("a", "start", "-a [start|halt]")
-var exe = flag.String("e", "D:\\Program Files\\Vagrant\\bin\\vagrant.exe", "-e \\path\\of\\vagrant.exe")
+var exe = flag.String("e", "vagrant", "-e \\path\\of\\vagrant.exe")
 var app *App
 var globalMap = sync.Map{}
 
@@ -29,139 +31,66 @@ type App struct {
 
 func (a *App) Run() error {
 
-
-	cmd := exec.Command("vagrant", "global-status")
-
+	// get all boxes
+	cmd := exec.Command(a.VagrantExe, "global-status")
 	out := &bytes.Buffer{}
 	cmd.Stdout = out
-	cmd.Start()
-	cmd.Wait()
-
-	all := strings.Split(out.String(), "\r\n")
-	fmt.Println(len(all))
-	if len(all) < 5 {
-		return nil
-	}
-
-
-	for i:= 0; i < len(all); i++ {
-		line := all[i]
-		l := strings.Split(line, " ")
-
-		if len(l[0]) == 7 {
-			if (l[0][6] >=48 && l[0][6] <=57) || (l[0][6] >=97 && l[0][6] <=122) {
-				fmt.Println(l[0])
-
-				cmd := exec.Command("vagrant", a.VagrantAction, l[0])
-
-
-				cmd.Stdout = os.Stdout
-				cmd.Stderr = os.Stderr
-				cmd.Start()
-				cmd.Wait()
-
-			}
-
-		}
-
-	}
-
-
-
-
-	return nil
-
-	a.WaitGroup = sync.WaitGroup{}
-
-	for _, fi := range a.FileInfoArr {
-
-		if !fi.IsDir() {
-			continue
-		}
-
-		fullPath := a.CurrentWorkDirectory + string(os.PathSeparator) + a.VagrantPath + string(os.PathSeparator) + fi.Name() + string(os.PathSeparator) + "Vagrantfile"
-		fullPath, err := filepath.Abs(fullPath)
-		if err != nil {
-			continue
-		}
-
-		if _, err := os.Stat("file:\\" + fullPath); os.IsNotExist(err) {
-			fmt.Println(err.Error())
-			continue
-		}
-
-		wd := a.VagrantPath + string(os.PathSeparator) + fi.Name()
-
-		switch a.VagrantAction {
-		case "start":
-			if err := a.start(wd); err != nil {
-				fmt.Println(err.Error(), fullPath)
-			}
-
-		case "halt":
-			if err := a.halt(wd); err != nil {
-				fmt.Println(err.Error(), fullPath)
-			}
-
-		default:
-			fmt.Println("no action :", a.VagrantAction)
-
-		}
-
-	}
-
-	return nil
-}
-
-func (a *App) start(fullPath string) error {
-	return a.exe(fullPath, "up", "STARTING...")
-}
-
-func (a *App) halt(fullPath string) error {
-	return a.exe(fullPath, "up", "STOPPING...")
-}
-
-func (a *App) exe(fullPath, command, info string) error {
-
-	// check task queue
-	if _, ok := globalMap.Load(fullPath); ok {
-		return nil
-	}
-
-	// show info
-	fmt.Println(info, fullPath)
-
-	// add to task queue
-	globalMap.Store(fullPath, true)
-
-	// create command
-	cmd := exec.Command("vagrant", command)
-
-	// set command
-	dir, err := filepath.Abs(fullPath)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(dir)
-	os.Chdir(dir)
-
-	cmd.Env = os.Environ()
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	cmd.Stdout = os.Stdin
-
-	// start
 	if err := cmd.Start(); err != nil {
 		return err
 	}
-
-	// wait
 	if err := cmd.Wait(); err != nil {
 		return err
 	}
 
+	// split list
+	all := strings.Split(out.String(), "\r\n")
+	if len(all) < 5 {
+		return nil
+	}
+
+	// regexp for ID
+	reg, err := regexp.Compile("^([0-9]|[a-z]){7,7} ")
+	if err != nil {
+		return err
+	}
+
+	// get box ID and execute COMMAND
+	count := 0
+	start := time.Now()
+	for i := 0; i < len(all); i++ {
+		line := all[i]
+
+		// match ID
+		if !reg.MatchString(line) {
+			continue
+		}
+
+		// get ID
+		id := reg.FindString(line)
+		fmt.Println("get ID with regex: ", id)
+		count++
+
+		// display info
+		fmt.Println(a.VagrantAction, "... ", id, "(", count, ")")
+
+		// execute command
+		cmd := exec.Command(a.VagrantExe, a.VagrantAction, id)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Start(); err != nil {
+			return err
+		}
+		if err := cmd.Wait(); err != nil {
+			return err
+		}
+
+	}
+
+	// print statics
+	fmt.Println("TAKE TIME (minute): ", time.Now().Sub(start).Minutes())
+
 	return nil
+
 }
 
 func main() {
