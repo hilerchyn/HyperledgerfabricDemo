@@ -3,3 +3,4 @@
 vagrant/data/
 tools/.idea/
 tools/*.exe
+.idea/

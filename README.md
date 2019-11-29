@@ -554,7 +554,8 @@ Error: error endorsing chaincode: rpc error: code = Unknown desc = access denied
 查看日志,在查询过程中提示 admin 的 tls  证书目录不存在,继续调查
 
 
-## 智能合约本地开发环境的搭建
+
+# ***智能合约本地开发环境的搭建***
 
 
 ### 克隆　fabric-samples 仓库
@@ -566,6 +567,7 @@ git clone https://github.com/hyperledger/fabric-samples.git
 git checkout v1.4.4  
 ```
 
+```
 .
 ├── balance-transfer
 ├── basic-network
@@ -590,7 +592,7 @@ git checkout v1.4.4
 ├── README.md
 ├── scripts
 └── SECURITY.md
-
+```
 
 
 ### 下载对应版本编译好的二进制文件
@@ -604,6 +606,7 @@ bash ./bootstrap.sh -s 1.4.4
 
 ```
 
+```
 .
 ├── bin
 │   ├── configtxgen
@@ -617,6 +620,7 @@ bash ./bootstrap.sh -s 1.4.4
     ├── configtx.yaml
     ├── core.yaml
     └── orderer.yaml
+```
 
 
 
@@ -635,6 +639,7 @@ cd chaincode-docker-devmode
 
 目录结构如下
 
+```
 .
 ├── chaincode
 ├── docker-compose-simple.yaml
@@ -656,6 +661,7 @@ cd chaincode-docker-devmode
 ├── orderer.block
 ├── README.rst
 └── script.sh
+```
 
 注意 myc.tx 和 myc.block 文件，对应的channel 名称为  myc ， 在后续安装和实例化智能合约时指定的channel 名字必须是 myc
 
