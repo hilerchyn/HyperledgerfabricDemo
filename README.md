@@ -552,3 +552,234 @@ Error: error endorsing chaincode: rpc error: code = Unknown desc = access denied
 
 
 查看日志,在查询过程中提示 admin 的 tls  证书目录不存在,继续调查
+
+
+## 智能合约本地开发环境的搭建
+
+
+### 克隆　fabric-samples 仓库
+
+```
+git clone https://github.com/hyperledger/fabric-samples.git
+
+# 切换到docker对应版本的分支下
+git checkout v1.4.4  
+```
+
+.
+├── balance-transfer
+├── basic-network
+├── bin
+├── chaincode
+├── chaincode-docker-devmode
+├── ci
+├── ci.properties
+├── CODE_OF_CONDUCT.md
+├── commercial-paper
+├── config
+├── CONTRIBUTING.md
+├── docs
+├── fabcar
+├── first-network
+├── high-throughput
+├── interest_rate_swaps
+├── Jenkinsfile
+├── LICENSE
+├── MAINTAINERS.md
+├── off_chain_data
+├── README.md
+├── scripts
+└── SECURITY.md
+
+
+
+### 下载对应版本编译好的二进制文件
+
+```
+
+wget -c https://github.com/hyperledger/fabric/blob/v1.4.4/scripts/bootstrap.sh
+
+bash ./bootstrap.sh -s 1.4.4
+
+
+```
+
+.
+├── bin
+│   ├── configtxgen
+│   ├── configtxlator
+│   ├── cryptogen
+│   ├── discover
+│   ├── idemixgen
+│   ├── orderer
+│   └── peer
+└── config
+    ├── configtx.yaml
+    ├── core.yaml
+    └── orderer.yaml
+
+
+
+得到 hyperledger-fabric-linux-amd64-1.4.4.tar.gz, 解压缩后的内容拷贝到， fabric-samples 仓库的目录下
+
+
+### 启动开发环境的docker
+
+
+进入fabric-samples仓库的 chaincode-docker-devmode 目录
+
+
+```
+cd chaincode-docker-devmode
+```
+
+目录结构如下
+
+.
+├── chaincode
+├── docker-compose-simple.yaml
+├── msp
+│   ├── admincerts
+│   │   └── admincert.pem
+│   ├── cacerts
+│   │   └── cacert.pem
+│   ├── keystore
+│   │   └── key.pem
+│   ├── signcerts
+│   │   └── peer.pem
+│   ├── tlscacerts
+│   │   └── tlsroot.pem
+│   └── tlsintermediatecerts
+│       └── tlsintermediate.pem
+├── myc.block
+├── myc.tx
+├── orderer.block
+├── README.rst
+└── script.sh
+
+注意 myc.tx 和 myc.block 文件，对应的channel 名称为  myc ， 在后续安装和实例化智能合约时指定的channel 名字必须是 myc
+
+
+```
+docker-compose -f ./docker-compose-simple.yaml  up -d
+
+[root@localhost chaincode-docker-devmode]# docker ps
+CONTAINER ID        IMAGE                        COMMAND                  CREATED             STATUS              PORTS                                            NAMES
+0af358c383f1        hyperledger/fabric-ccenv     "/bin/sh -c 'sleep 6…"   50 minutes ago      Up 50 minutes                                                        chaincode
+552b24ad6fe6        hyperledger/fabric-tools     "/bin/bash -c ./scri…"   50 minutes ago      Up 50 minutes                                                        cli
+2c167b34df85        hyperledger/fabric-peer      "peer node start --p…"   50 minutes ago      Up 50 minutes       0.0.0.0:7051->7051/tcp, 0.0.0.0:7053->7053/tcp   peer
+e415c523d336        hyperledger/fabric-orderer   "orderer"                50 minutes ago      Up 50 minutes       0.0.0.0:7050->7050/tcp                           orderer
+
+```
+
+chaincode 容器用于编译测试
+
+cli 容器用于安装、实例化、查询智能合约
+
+
+### 开发测试智能合约
+
+
+确认peer节点没有任何智能合约
+
+```
+
+ docker exec -it peer bash
+
+
+root@d8a94ed6aaab:/opt/gopath/src/github.com/hyperledger/fabric/peer# ls /var/hyperledger/production/chaincodes/ -al
+total 0
+drwxr-xr-x 2 root root  6 Nov 28 09:26 .
+drwxr-xr-x 5 root root 65 Nov 28 09:26 ..
+root@d8a94ed6aaab:/opt/gopath/src/github.com/hyperledger/fabric/peer#
+
+```
+
+chaincode 节点编译，初始智能合约
+
+```
+
+# 进入容器
+ docker exec -it chaincode bash
+
+# 查看当前目录结构，所有的可测试的智能合约就在当前目录下，如果自己开发的话，也要将内容放置到当前目录下
+root@1e6051626195:/opt/gopath/src/chaincode# ls -al
+total 8
+drwxrwxrwx 1 1000 1000 4096 Nov 28 07:48 .
+drwxr-xr-x 4 root root   41 Nov 28 09:26 ..
+drwxrwxrwx 1 1000 1000    0 Nov 28 07:39 abac
+drwxrwxrwx 1 1000 1000    0 Nov 28 07:48 chaincode_example02
+drwxrwxrwx 1 1000 1000 4096 Nov 28 07:48 fabcar
+drwxrwxrwx 1 1000 1000    0 Nov 28 07:48 marbles02
+drwxrwxrwx 1 1000 1000    0 Nov 28 07:48 marbles02_private
+drwxrwxrwx 1 1000 1000    0 Nov 28 08:37 sacc
+drwxrwxrwx 1 1000 1000    0 Nov 28 08:37 sacc
+
+# 进入对应的智能合约目录下并编译
+root@1e6051626195:/opt/gopath/src/chaincode# cd sacc
+root@1e6051626195:/opt/gopath/src/chaincode/sacc# go build
+root@1e6051626195:/opt/gopath/src/chaincode/sacc# ls -al
+total 22944
+drwxrwxrwx 1 1000 1000        0 Nov 28 09:34 .
+drwxrwxrwx 1 1000 1000     4096 Nov 28 07:48 ..
+-rwxrwxrwx 1 1000 1000 23484336 Nov 28 09:34 sacc
+-rwxrwxrwx 1 1000 1000     2851 Nov 28 07:48 sacc.go
+
+
+# 运行智能合约, 此处启动完，不能退出，因为在cli容器操作查询时要跟此容器的进程交互才能完成查询功能
+
+root@1e6051626195:/opt/gopath/src/chaincode/sacc# CORE_PEER_ADDRESS=peer:7052 CORE_CHAINCODE_ID_NAME=sacc:0 ./sacc
+2019-11-28 09:47:56.215 UTC [shim] setupChaincodeLogging -> INFO 001 Chaincode log level not provided; defaulting to: INFO
+2019-11-28 09:47:56.218 UTC [shim] setupChaincodeLogging -> INFO 002 Chaincode (build level: ) starting up ...
+2019-11-28 09:47:56.222 UTC [bccsp] initBCCSP -> DEBU 001 Initialize BCCSP [SW]
+2019-11-28 09:47:56.229 UTC [grpc] DialContext -> DEBU 002 parsed scheme: ""
+2019-11-28 09:47:56.230 UTC [grpc] DialContext -> DEBU 003 scheme "" not registered, fallback to default scheme
+2019-11-28 09:47:56.233 UTC [grpc] watcher -> DEBU 004 ccResolverWrapper: sending new addresses to cc: [{peer:7052 0  <nil>}]
+2019-11-28 09:47:56.234 UTC [grpc] switchBalancer -> DEBU 005 ClientConn switching balancer to "pick_first"
+2019-11-28 09:47:56.238 UTC [grpc] HandleSubConnStateChange -> DEBU 006 pickfirstBalancer: HandleSubConnStateChange: 0xc0003d4ad0, CONNECTING
+2019-11-28 09:47:56.299 UTC [grpc] HandleSubConnStateChange -> DEBU 007 pickfirstBalancer: HandleSubConnStateChange: 0xc0003d4ad0, READY
+
+
+
+```
+
+此处启动完，不能退出，因为在cli容器操作查询时要跟此容器的进程交互才能完成查询功能
+
+cli 容器安装测试
+
+```
+docker exec -it cli bash
+
+root@cb5cf1bd622a:/opt/gopath/src/chaincodedev# ls
+chaincode  docker-compose-simple.yaml  msp  myc.block  myc.tx  orderer.block  README.rst  script.sh
+
+
+# 安装
+peer chaincode install -p chaincodedev/chaincode/sacc -n sacc -v 0
+
+
+2019-11-28 10:00:57.349 UTC [container] WriteFileToPackage -> DEBU 04a Writing file to tarball: src/chaincodedev/chaincode/sacc/sacc.go
+2019-11-28 10:00:57.355 UTC [msp.identity] Sign -> DEBU 04b Sign: plaintext: 0AC4070A5C08031A0C08D9B5FEEE0510...7719FF040000FFFF996692F900120000
+2019-11-28 10:00:57.355 UTC [msp.identity] Sign -> DEBU 04c Sign: digest: A5031D5B6B27C282F9753A481C68412F997513C620CD4ECB2EEFC61F8B44EFC2
+2019-11-28 10:00:57.361 UTC [chaincodeCmd] install -> INFO 04d Installed remotely response:<status:200 payload:"OK" >
+
+# peer 节点中已经
+#
+#root@d8a94ed6aaab:/opt/gopath/src/github.com/hyperledger/fabric/peer# ls /var/hyperledger/production/chaincodes/ -al
+#total 8
+#drwxr-xr-x 2 root root   34 Nov 28 10:00 .
+#drwxr-xr-x 5 root root   65 Nov 28 09:26 ..
+#-rw-r--r-- 1 root root 1244 Nov 28 09:59 sacc.0
+#-rw-r--r-- 1 root root 1244 Nov 28 10:00 sacc.1
+
+
+# 实例化
+
+peer chaincode instantiate -n sacc -v 0 -c '{"Args":["a","10"]}' -C myc
+
+peer chaincode query -n sacc -c '{"Args":["query","a"]}' -C myc
+
+peer chaincode invoke -n sacc -c '{"Args":["set","a", "200"]}' -C myc
+
+
+```
