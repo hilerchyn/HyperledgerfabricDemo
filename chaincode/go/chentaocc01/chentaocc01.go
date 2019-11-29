@@ -45,6 +45,9 @@ func (cc *ChenTaoCC01) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	case "pay":
 		return cc.pay(stub, args)
 
+	case "query":
+		return cc.query(stub, args)
+
 	}
 
 	return shim.Error("Invalid invoke function name. Expecting \"create\" \"delete\" \"deposit\" \"withdraw\" \"pay\" ")
