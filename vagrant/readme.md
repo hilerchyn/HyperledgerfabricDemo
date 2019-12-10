@@ -36,6 +36,8 @@ registry 主要有 v1 和 v2 两个版本，v1基本已经弃用了。
 
 *自建registry 的目的是提高镜像pull速度，统一管理，便于后续版本变更的统一管理*
 
+Docker镜像可以使用阿里云的加速服务来提高pull速度，https://cr.console.aliyun.com/cn-hangzhou/instances/mirrors
+
 
 ## 启动
 <hr/>
